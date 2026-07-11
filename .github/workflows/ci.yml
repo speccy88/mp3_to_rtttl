@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lightweight-checks:
+    name: Lightweight checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lightweight test tools
+        run: >-
+          python -m pip install --disable-pip-version-check
+          "numpy>=1.23,<3"
+          "ruff>=0.7,<1"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Check formatting
+        run: ruff format --check .
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Compile Python sources
+        run: >-
+          python -m py_compile
+          mp3_to_rtttl.py
+          mp3_to_rtttl_gui.py
+          rtttl_utils.py
+          tools/evaluate_rtttl_quality.py

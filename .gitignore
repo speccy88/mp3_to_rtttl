@@ -1,0 +1,39 @@
+# Python environments and build products
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Tooling and test caches
+.coverage
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+
+# Editors and operating-system metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# User-provided source audio and generated audition/output files
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+*.mid
+*.midi
+*.rtttl
+audition_exports/
+outputs/

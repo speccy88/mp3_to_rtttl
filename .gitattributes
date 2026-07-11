@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+*.py text eol=lf
+*.md text eol=lf
+*.rtttl text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+*.flac binary
+*.m4a binary
+*.mid binary
+*.midi binary
+*.mp3 binary
+*.ogg binary
+*.onnx binary
+*.wav binary
