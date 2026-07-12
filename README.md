@@ -1,5 +1,9 @@
 # MP3 to RTTTL Studio
 
+![MP3 to RTTTL Studio showing the source waveform, ranked melody variations, and analyzer piano-roll overlay](docs/images/mp3-to-rtttl-studio-analyzer.png)
+
+_The studio analyzing an original demo hook; no third-party audio is included._
+
 Convert short audio excerpts into monophonic Nokia RTTTL ringtones. The project
 includes a native PySide6 variation studio for interactive work and a command-line
 converter for repeatable exports.

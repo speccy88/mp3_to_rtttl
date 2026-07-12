@@ -15,4 +15,5 @@
 *.mp3 binary
 *.ogg binary
 *.onnx binary
+*.png binary
 *.wav binary
