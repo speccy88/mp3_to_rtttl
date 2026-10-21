@@ -1,0 +1,111 @@
+{
+  "status": "PASS",
+  "scope": "Real generated WAV -> FFmpeg MP3 -> HTTP upload -> Basic Pitch ONNX -> RTTTL",
+  "fixture": "short_passing_notes",
+  "static_entry_served": true,
+  "health_ready": true,
+  "uploaded_bytes": 13811,
+  "upload_removed": true,
+  "result": {
+    "candidates": [
+      {
+        "name": "Detailed lead",
+        "rtttl": "generated:d=4,o=5,b=90:4c5,16d5,4c5,16e5,8c5,16f5,8e5,16d5,4c5",
+        "score": 0.8027867360110273,
+        "settings": {
+          "grid": 16,
+          "min_confidence": 0.32,
+          "onset_threshold": 0.45,
+          "frame_threshold": 0.25,
+          "minimum_note_ms": 100.0,
+          "top_voice_bias": 0.1,
+          "jump_penalty": 0.055,
+          "note_change_penalty": 0.14,
+          "onset_change_bonus": 0.7,
+          "onset_change_relief": 0.24,
+          "onset_same_pitch_bonus": 0.15,
+          "sustain_bonus": 0.42,
+          "repeated_note_min_steps": 2,
+          "minimum_melody_run_steps": 1,
+          "strict_rtttl_bpm": false,
+          "octave_smoothing": false,
+          "max_melody_span": 14,
+          "decoder_mode": "events",
+          "contour_candidate_floor": 0.1,
+          "contour_relative_floor": 0.3,
+          "contour_max_candidates": 8,
+          "contour_time_support": 0.22,
+          "octave_jump_penalty": 0.12,
+          "upper_relative_floor": 0.4,
+          "upper_octave_guard_ratio": 1.2,
+          "upper_dropout_semitones": 14,
+          "upper_dropout_max_steps": 10,
+          "upper_onset_relative_floor": 0.75,
+          "upper_onset_max_semitones": 8
+        },
+        "diagnostics": {
+          "estimated_bpm": 90.0,
+          "rtttl_bpm": 90.0,
+          "detected_events": 10.0,
+          "rtttl_tokens": 9.0,
+          "source_offset_seconds": 0.0,
+          "duration_seconds": 3.333333333333333
+        }
+      },
+      {
+        "name": "Continuous contour",
+        "rtttl": "generated:d=4,o=5,b=90:4c5,16d5,4c5,16e5,8c5,16f5,8e5,16d5,8c5.,16c5",
+        "score": 0.8024139037489573,
+        "settings": {
+          "grid": 16,
+          "min_confidence": 0.32,
+          "onset_threshold": 0.45,
+          "frame_threshold": 0.25,
+          "minimum_note_ms": 100.0,
+          "top_voice_bias": 0.1,
+          "jump_penalty": 0.055,
+          "note_change_penalty": 0.14,
+          "onset_change_bonus": 0.7,
+          "onset_change_relief": 0.24,
+          "onset_same_pitch_bonus": 0.15,
+          "sustain_bonus": 0.42,
+          "repeated_note_min_steps": 2,
+          "minimum_melody_run_steps": 1,
+          "strict_rtttl_bpm": false,
+          "octave_smoothing": false,
+          "max_melody_span": 14,
+          "decoder_mode": "contour",
+          "contour_candidate_floor": 0.1,
+          "contour_relative_floor": 0.3,
+          "contour_max_candidates": 8,
+          "contour_time_support": 0.22,
+          "octave_jump_penalty": 0.12,
+          "upper_relative_floor": 0.4,
+          "upper_octave_guard_ratio": 1.2,
+          "upper_dropout_semitones": 14,
+          "upper_dropout_max_steps": 10,
+          "upper_onset_relative_floor": 0.75,
+          "upper_onset_max_semitones": 8
+        },
+        "diagnostics": {
+          "estimated_bpm": 90.0,
+          "rtttl_bpm": 90.0,
+          "detected_events": 12.0,
+          "rtttl_tokens": 10.0,
+          "source_offset_seconds": 0.0,
+          "duration_seconds": 3.333333333333333
+        }
+      }
+    ],
+    "analysis": {
+      "estimated_bpm": 90.0,
+      "source_mode": "full",
+      "start": 0.0,
+      "duration": 3.3333333333333335
+    },
+    "warnings": [
+      "Source evidence scores measure agreement with detected notes, not recognition accuracy. Compare the original excerpt by ear."
+    ]
+  },
+  "limits": "Synthetic audio; does not measure recognition of real full-mix songs or browser UI behavior."
+}
