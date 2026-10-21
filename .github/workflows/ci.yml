@@ -46,9 +46,7 @@ jobs:
           python -m py_compile
           mp3_to_rtttl.py
           mp3_to_rtttl_gui.py
-          rtttl_studio.py
           rtttl_utils.py
           tools/evaluate_rtttl_quality.py
           tools/compare_melody_revision.py
           tools/evaluate_studio_presets.py
-          tools/verify_studio_service.py

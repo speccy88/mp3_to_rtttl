@@ -62,22 +62,16 @@ optional MIDI diagnostics, and returns the RTTTL string.
 
 ## Unified browser studio
 
-`rtttl_studio.py` serves the sibling `rtttl-generative-transformer/web/dist` build and
-a bounded same-origin conversion API. `--build-web` runs that project's existing
-build with a root asset path. The browser's existing generator, cache, player,
-library and exports remain the common workspace.
+The shared application lives in `rtttl-generative-transformer/web` and runs entirely
+on GitHub Pages. Its browser transcription worker uses the licensed Basic Pitch
+ONNX model and ports the evidence/timing principles from this Python converter.
+There is no runtime connection to this repository and no local HTTP service.
 
-Audio uploads are limited to 32 MiB and excerpts to 30 seconds. One background
-conversion runs at a time. It calls `analyze_audio()` once, renders up to three
-distinct interpretations with different decoders, then discards the source file.
-Eight recent jobs at most remain in memory for 15 minutes. The HTTP service binds
-only to loopback, validates Host/Origin and uses no additional web framework.
-
-The browser imports conversion results as RTTTL, preserves old library entries,
-and edits into new versions. Explicit continuation tokenizes the selected score
-as the transformer's prompt, preserving its events and tempo. Generation is not
-part of transcription ranking or automatic correction. See
-[the API contract](docs/STUDIO_API.md) and [feature specification](docs/RTTTL_STUDIO_SPEC.md).
+The browser editor shares scores between audio conversion and the generative
+transformer. It supports source excerpt selection, candidate comparison, manual
+note edits, constrained variations, suffix-scored repair suggestions and exact
+prefix continuation. Repair remains a symbolic-model suggestion, not proof of a
+note in the recording. See [the feature specification](docs/RTTTL_STUDIO_SPEC.md).
 
 ## Desktop studio
 

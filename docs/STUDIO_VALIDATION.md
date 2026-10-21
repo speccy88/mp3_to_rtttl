@@ -26,7 +26,7 @@ A separate synthetic tempo regression previously scored 60, 120 and 240 BPM
 equally at 1.000 against a 120 BPM source. Revised source-evidence scores are
 0.2138, 1.0000 and 0.2908. Timing is no longer normalized away before ranking.
 
-The browser's faithful preset uses a 16th-note grid, a 100 ms minimum detected
+A reference faithful preset uses a 16th-note grid, a 100 ms minimum detected
 note duration, a two-step repeated-note threshold, and no octave smoothing.
 A bounded four-preset comparison on one known nine-event melody found that
 32nd-note timing exposed false re-attacks. The selected preset retained all nine
@@ -36,53 +36,21 @@ produced 16 and 19 events respectively. See
 `python tools/evaluate_studio_presets.py`. This default cannot represent genuine
 32nd-note detail, and the 100 ms filter may omit genuinely fast notes.
 
-## Local service
+## Verification scope
 
-- 27 Python unit/integration tests pass, including real loopback HTTP requests.
-- Tests cover bounded options/uploads, active-job conflicts, result polling,
-  success/failure cleanup, Host/Origin validation and static asset delivery.
-- Ruff lint/format and Python syntax checks pass.
-- An actual generated WAV was encoded to MP3 with FFmpeg, uploaded through HTTP,
-  transcribed by Basic Pitch ONNX, and returned as parseable candidates. The
-  browser entry asset was served and the temporary upload was removed. See
-  [the service evidence](studio_service_results.json).
+The converter core and parser have 22 Python unit tests. The inference gate and
+original-revision comparison above validate the Python implementation. The preset
+comparison includes actual WAV and MP3 decoding with the same model evidence.
+These results must not be copied as measured browser transcription accuracy.
 
-Reproduce the full service check after building the sibling browser application:
+The local HTTP service introduced in the initial draft has been removed after the
+user clarified the GitHub Pages-only requirement. Its tests and setup instructions
+are not part of the final application.
 
-```sh
-python tools/verify_studio_service.py --output /tmp/studio-service-check.json
-```
-
-## Browser application and generation
-
-- All seven JavaScript unit-test files pass, including prefix conditioning,
-  service-client errors, tempo/transpose edits and append semantics.
-- Root-path production build passes with the existing locked dependency versions.
-- Nine focused browser integration cases were added for conversion, fractional
-  excerpt timing, editing, continuation, originals, errors, static fallback and a
-  narrow viewport.
-- Interactive browser smoke verified page rendering, RTTTL import, a transposed
-  copy, original preservation after reload, playback controls, and the static
-  site's converter setup state.
-- Actual published ONNX weights were hash-verified and run through the continuation
-  sampler with native CPU inference: eight source events retained and eight new
-  events sampled, with 16 inference calls per run. Same-seed output matched.
-  Evidence is in the generator's `results/studio_continuation_native.json`.
-
-The internal browser preview uses plain HTTP on a non-localhost name, so Web Crypto
-is unavailable and model hash verification cannot run there. The worker now gives
-an actionable HTTPS/localhost message. No checksum check was bypassed. Native
-inference establishes checkpoint/sampler compatibility; it does not establish the
-browser WebGPU/WASM lifecycle. The supported local URL is a secure-context
-loopback origin, and the public site uses HTTPS.
-
-The browser regression suite passed on the paired generator pull request in
-[GitHub Actions run 39520703116](https://github.com/speccy88/rtttl-generative-transformer/actions/runs/39520703116).
-The converter's lightweight CI also passed in
-[run 39520741292](https://github.com/speccy88/mp3_to_rtttl/actions/runs/39520741292).
-No physical iPhone or user-device performance test has been performed in this
-environment. The browser tests use mocked model/API responses where indicated;
-the separate ONNX and real-HTTP checks above establish actual engine execution.
+The independent JavaScript transcription port, interactive selection, variations
+and repair are verified in the generator repository. See its
+[Studio documentation](https://github.com/speccy88/rtttl-generative-transformer/blob/main/docs/RTTTL_STUDIO.md)
+and the paired pull request for browser/native inference evidence and current CI.
 
 ## Practical limits
 
