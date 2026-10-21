@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-21T00:09:37.465042+00:00",
+  "baseline_commit": "41f86342c024ad261c0256a50106a641fc492391",
+  "working_tree_head": "41f86342c024ad261c0256a50106a641fc492391",
+  "working_tree_scope": "Modified renderer and analysis-envelope code, before commit.",
+  "source_sha256": {
+    "mp3_to_rtttl.py": "7d312e438e9640c35ef1c1f79cf02279b7568d5e9e66d37b963964c20d79b5ab",
+    "rtttl_utils.py": "9b192fc3295107978b54c94139d6c54f7ee92318bb5d9215d24d7a200897e7aa",
+    "tests/test_melody_fidelity.py": "1bda995d82afc561a1bc2130c591c9a3f9e48ef1c05fae907d6198afced987d5",
+    "tools/evaluate_rtttl_quality.py": "c6e2feb9ecc68f9f30e4181579a5ac14d8bab904c2cf6b13051f4f1c4e78e530",
+    "tools/compare_melody_revision.py": "e537dd2a72e90e6f177131ec149e5153c6e4d7dede5d7598319d5758471e7277"
+  },
+  "runtime": {
+    "python": "3.11.17",
+    "platform": "Linux",
+    "packages": {
+      "basic-pitch": "0.4.0",
+      "onnxruntime": "1.31.0",
+      "librosa": "0.11.0",
+      "numpy": "1.26.4",
+      "soundfile": "0.14.0"
+    }
+  },
+  "method": {
+    "comparison": "Original-commit renderer versus revised renderer on shared ONNX evidence.",
+    "inference_calls": 3,
+    "sample_rate": 22050,
+    "source_mode": "harmonic",
+    "tempo": "Known fixture BPM supplied to both renderers.",
+    "grid": 16,
+    "composite_formula": "0.55 * pitch_class + 0.25 * octave_adjusted_midi + 0.20 * onset_f1",
+    "onset_tolerance_grid_steps": 1,
+    "baseline_note_extractor": "Shared current extractor; unchanged by this revision.",
+    "synthesizer": "tools/evaluate_rtttl_quality.py:synthesize_fixture"
+  },
+  "comparisons": [
+    {
+      "fixture": {
+        "name": "short_notes_and_rests",
+        "bpm": 90,
+        "notes": [
+          [
+            null,
+            0.5
+          ],
+          [
+            60,
+            1
+          ],
+          [
+            62,
+            0.25
+          ],
+          [
+            64,
+            0.25
+          ],
+          [
+            65,
+            0.5
+          ],
+          [
+            null,
+            0.25
+          ],
+          [
+            65,
+            0.5
+          ],
+          [
+            67,
+            0.25
+          ],
+          [
+            69,
+            0.5
+          ],
+          [
+            67,
+            1
+          ],
+          [
+            null,
+            0.5
+          ]
+        ],
+        "accompaniment": false
+      },
+      "baseline": {
+        "composite": 0.5506493506493506,
+        "pitch_class_accuracy": 0.5454545454545454,
+        "octave_adjusted_midi_accuracy": 0.5454545454545454,
+        "onset_f1": 0.5714285714285715,
+        "rtttl": "short_note:d=4,o=5,b=90:4c5.,8f5.,4f5,8a5,4g5"
+      },
+      "revised": {
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "rtttl": "short_note:d=4,o=5,b=90:8p,4c5,16d5,16e5,8f5,16p,8f5,16g5,8a5,4g5,8p"
+      }
+    },
+    {
+      "fixture": {
+        "name": "short_passing_notes",
+        "bpm": 90,
+        "notes": [
+          [
+            60,
+            1
+          ],
+          [
+            62,
+            0.25
+          ],
+          [
+            60,
+            1
+          ],
+          [
+            64,
+            0.25
+          ],
+          [
+            60,
+            0.5
+          ],
+          [
+            65,
+            0.25
+          ],
+          [
+            64,
+            0.5
+          ],
+          [
+            62,
+            0.25
+          ],
+          [
+            60,
+            1
+          ]
+        ],
+        "accompaniment": false
+      },
+      "baseline": {
+        "composite": 0.8000000000000002,
+        "pitch_class_accuracy": 0.8,
+        "octave_adjusted_midi_accuracy": 0.8,
+        "onset_f1": 0.7999999999999999,
+        "rtttl": "short_pass:d=4,o=5,b=90:16c5,4c5,16c5,4c5,8c5,8e5.,16c5,4c5"
+      },
+      "revised": {
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "rtttl": "short_pass:d=4,o=5,b=90:4c5,16d5,4c5,16e5,8c5,16f5,8e5,16d5,4c5"
+      }
+    },
+    {
+      "fixture": {
+        "name": "gated_repeated_notes",
+        "bpm": 90,
+        "notes": [
+          [
+            60,
+            1
+          ],
+          [
+            null,
+            0.25
+          ],
+          [
+            60,
+            1
+          ],
+          [
+            null,
+            0.25
+          ],
+          [
+            62,
+            0.5
+          ],
+          [
+            null,
+            0.25
+          ],
+          [
+            62,
+            0.5
+          ],
+          [
+            null,
+            0.25
+          ],
+          [
+            64,
+            1
+          ]
+        ],
+        "accompaniment": false
+      },
+      "baseline": {
+        "composite": 0.8000000000000002,
+        "pitch_class_accuracy": 0.8,
+        "octave_adjusted_midi_accuracy": 0.8,
+        "onset_f1": 0.7999999999999999,
+        "rtttl": "gated_repe:d=4,o=5,b=90:16c5,4c5,16c5,4c5,8d5,8d5.,16d5,4e5"
+      },
+      "revised": {
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "rtttl": "gated_repe:d=4,o=5,b=90:4c5,16p,4c5,16p,8d5,16p,8d5,16p,4e5"
+      }
+    }
+  ],
+  "limits": [
+    "Synthetic short melodies only; no real song or dense commercial mix was supplied.",
+    "Known BPM removes automatic tempo estimation from these comparisons.",
+    "Octave-adjusted accuracy permits one global whole-octave transposition.",
+    "Onset F1 permits one grid step of timing error.",
+    "The source-envelope veto detects global near-silence; it does not isolate a melody.",
+    "Source-evidence ranking scores are not measured recognition accuracy.",
+    "The quality gate's legacy row is a legacy parameter set using revised code, not this baseline commit."
+  ],
+  "quality_gate": {
+    "command": "python tools/evaluate_rtttl_quality.py",
+    "report_file": "studio_quality_gate.txt",
+    "report_sha256": "0920f038335c7a952ab77d9c535243ad127526f61e906b0930ad9395046adda8",
+    "current_average": 1.0,
+    "required_average": 0.95,
+    "fixtures": [
+      {
+        "fixture": "repeated_intervals",
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "tokens": 14
+      },
+      {
+        "fixture": "scale",
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "tokens": 15
+      },
+      {
+        "fixture": "leaps",
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "tokens": 13
+      },
+      {
+        "fixture": "short_notes_and_rests",
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "tokens": 11
+      },
+      {
+        "fixture": "short_passing_notes",
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "tokens": 9
+      },
+      {
+        "fixture": "gated_repeated_notes",
+        "composite": 1.0,
+        "pitch_class_accuracy": 1.0,
+        "octave_adjusted_midi_accuracy": 1.0,
+        "onset_f1": 1.0,
+        "tokens": 9
+      }
+    ],
+    "note": "Captured earlier with the same revised sources; not rerun by this comparison."
+  }
+}

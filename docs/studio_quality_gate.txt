@@ -1,0 +1,15 @@
+legacy: average=0.902
+  repeated_intervals: score=0.767 pitch=0.821 octave=0.821 onset=0.552 tokens=17
+  scale: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=15
+  leaps: score=0.753 pitch=0.729 octave=0.729 onset=0.846 tokens=15
+  short_notes_and_rests: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=11
+  short_passing_notes: score=0.895 pitch=0.900 octave=0.900 onset=0.875 tokens=9
+  gated_repeated_notes: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=9
+current: average=1.000
+  repeated_intervals: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=14
+  scale: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=15
+  leaps: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=13
+  short_notes_and_rests: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=11
+  short_passing_notes: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=9
+  gated_repeated_notes: score=1.000 pitch=1.000 octave=1.000 onset=1.000 tokens=9
+real excerpts: none supplied

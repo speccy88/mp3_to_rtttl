@@ -60,6 +60,19 @@ No network service participates in this stage.
 `convert()` is the CLI-oriented orchestration layer that analyzes, renders, writes
 optional MIDI diagnostics, and returns the RTTTL string.
 
+## Unified browser studio
+
+The shared application lives in `rtttl-generative-transformer/web` and runs entirely
+on GitHub Pages. Its browser transcription worker uses the licensed Basic Pitch
+ONNX model and ports the evidence/timing principles from this Python converter.
+There is no runtime connection to this repository and no local HTTP service.
+
+The browser editor shares scores between audio conversion and the generative
+transformer. It supports source excerpt selection, candidate comparison, manual
+note edits, constrained variations, suffix-scored repair suggestions and exact
+prefix continuation. Repair remains a symbolic-model suggestion, not proof of a
+note in the recording. See [the feature specification](docs/RTTTL_STUDIO_SPEC.md).
+
 ## Desktop studio
 
 `mp3_to_rtttl_gui.py` contains the PySide6 application.

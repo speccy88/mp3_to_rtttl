@@ -357,7 +357,7 @@ def analyze_audio(
     if y.size == 0:
         raise RuntimeError("The selected excerpt contains no audio.")
 
-    notify("Separating the harmonic lead from percussion...")
+    notify("Separating harmonic content from percussion...")
     harmonic, percussive = librosa.effects.hpss(y)
     if requested_mode == "auto":
         flatness = spectral_flatness_score(y)
@@ -368,7 +368,7 @@ def analyze_audio(
     if selected_mode == "full":
         notify("Using the full mix to preserve short chiptune notes...")
     else:
-        notify("Using the separated harmonic lead...")
+        notify("Using harmonic content (lead and accompaniment)...")
     if bpm_hint is None:
         notify("Estimating tempo...")
         estimated_bpm = estimate_bpm(percussive, sr, librosa)
@@ -384,6 +384,14 @@ def analyze_audio(
         if _MODEL_RUNNER is None:
             raise RuntimeError("The ONNX transcription backend did not initialize.")
         model_output = _MODEL_RUNNER(analysis_wav)
+
+    # HPSS and the transcription network can sustain a note across actual
+    # silence. Retain a small envelope of the original signal to veto only
+    # near-silent grid cells later; this is not vocal/source separation.
+    energy_hop = max(1, round(sr * 0.01))
+    padded_audio = np.pad(y, (0, (-y.size) % energy_hop))
+    model_output["source_rms"] = np.sqrt(np.mean(padded_audio.reshape(-1, energy_hop) ** 2, axis=1))
+    model_output["source_rms_hop_seconds"] = np.asarray(energy_hop / sr)
 
     return TranscriptionAnalysis(
         input_path=path.resolve(),
@@ -498,8 +506,11 @@ def build_quantized_melody_grid(
         onset_steps.add(onset)
         onset_pitches[onset][pitch] = max(onset_pitches[onset].get(pitch, 0.0), confidence)
 
-        first = max(0, int(math.floor(start / seconds_per_step)))
-        last = min(n_steps, int(math.ceil(end / seconds_per_step)))
+        # Snap the sounding span to the same grid as its attack. Using floor
+        # and ceil here made almost every slight timing offset grow a note by
+        # a full cell, consuming short rests and starting the next note early.
+        first = onset
+        last = min(n_steps, max(first + 1, int(round(end / seconds_per_step))))
 
         for index in range(first, last):
             cell_start = index * seconds_per_step
@@ -507,9 +518,12 @@ def build_quantized_melody_grid(
             overlap = max(0.0, min(end, cell_end) - max(start, cell_start))
             overlap_ratio = overlap / seconds_per_step
             if overlap_ratio <= 0.0:
-                continue
+                # A sub-cell note can round wholly into its attack cell.
+                overlap_ratio = min(1.0, (end - start) / seconds_per_step)
 
-            score = confidence * (0.5 + 0.5 * overlap_ratio)
+            # A note touching a cell only briefly must not compete as if it
+            # occupied half of it. That inflated quiet tails and early attacks.
+            score = confidence * overlap_ratio
             slots[index][pitch] = max(slots[index].get(pitch, 0.0), score)
 
     return slots, onset_steps, onset_pitches
@@ -918,6 +932,9 @@ def remove_one_step_blips(
     cleaned = path.copy()
     for index in range(1, len(cleaned) - 1):
         pitch = cleaned[index]
+        if pitch is None:
+            # A sixteenth-note rest is part of the rhythm, not a pitch glitch.
+            continue
         protected_onset = (
             pitch is not None
             and onset_pitches is not None
@@ -932,8 +949,9 @@ def remove_one_step_blips(
 def merge_short_note_runs(
     path: list[Optional[int]],
     minimum_steps: int = DEFAULT_MINIMUM_MELODY_RUN_STEPS,
+    onset_pitches: Optional[list[dict[int, float]]] = None,
 ) -> list[Optional[int]]:
-    """Merge short passing tones into the closest neighboring melody run."""
+    """Merge unsupported short pitch runs while preserving attacks and rests."""
     if len(path) < 2 or minimum_steps <= 1:
         return path
 
@@ -948,7 +966,12 @@ def merge_short_note_runs(
 
         changed = False
         for run_index, (start, end, pitch) in enumerate(runs):
-            if end - start >= minimum_steps:
+            if pitch is None or end - start >= minimum_steps:
+                continue
+            if onset_pitches is not None and any(
+                pitch in onset_pitches[index]
+                for index in range(start, min(end, len(onset_pitches)))
+            ):
                 continue
 
             previous_run = runs[run_index - 1] if run_index else None
@@ -956,22 +979,17 @@ def merge_short_note_runs(
             previous_pitch = previous_run[2] if previous_run else None
             next_pitch = next_run[2] if next_run else None
 
-            if pitch is None:
-                if previous_pitch is None or previous_pitch != next_pitch:
-                    continue
-                replacement = previous_pitch
-            else:
-                neighbors = []
-                if previous_run and previous_pitch is not None:
-                    neighbors.append((previous_pitch, previous_run[1] - previous_run[0]))
-                if next_run and next_pitch is not None:
-                    neighbors.append((next_pitch, next_run[1] - next_run[0]))
-                if not neighbors:
-                    continue
-                replacement, _length = min(
-                    neighbors,
-                    key=lambda item: (abs(item[0] - pitch), -item[1]),
-                )
+            neighbors = []
+            if previous_run and previous_pitch is not None:
+                neighbors.append((previous_pitch, previous_run[1] - previous_run[0]))
+            if next_run and next_pitch is not None:
+                neighbors.append((next_pitch, next_run[1] - next_run[0]))
+            if not neighbors:
+                continue
+            replacement, _length = min(
+                neighbors,
+                key=lambda item: (abs(item[0] - pitch), -item[1]),
+            )
 
             merged[start:end] = [replacement] * (end - start)
             changed = True
@@ -1014,6 +1032,30 @@ def fit_to_rtttl_octaves(path: list[Optional[int]]) -> list[Optional[int]]:
         fitted.append(value)
 
     return fitted
+
+
+def preserve_source_silence(
+    path: list[Optional[int]], analysis: TranscriptionAnalysis, bpm: int, grid: int
+) -> list[Optional[int]]:
+    """Veto model sustain in near-silent source cells, leaving quiet notes alone."""
+    rms = np.asarray(analysis.model_output.get("source_rms", []), dtype=np.float32)
+    if rms.ndim != 1 or not rms.size or not np.all(np.isfinite(rms)):
+        return path
+    hop_seconds = float(analysis.model_output.get("source_rms_hop_seconds", 0.01))
+    if not math.isfinite(hop_seconds) or hop_seconds <= 0:
+        return path
+    # 0.5% of the source peak RMS is about -46 dB. A cell must be mostly at
+    # this floor; a merely quiet note or a short articulation gap stays intact.
+    silence_floor = float(np.max(rms)) * 0.005
+    seconds_per_step = (240.0 / bpm) / grid
+    result = path.copy()
+    for step in range(len(result)):
+        first = max(0, int(math.floor(step * seconds_per_step / hop_seconds)))
+        last = min(rms.size, int(math.ceil((step + 1) * seconds_per_step / hop_seconds)))
+        window = rms[first:last]
+        if window.size and np.mean(window <= silence_floor) >= 0.75:
+            result[step] = None
+    return result
 
 
 def smooth_octave_contour(
@@ -1118,6 +1160,7 @@ def collapse_runs(
     repeated_note_min_steps: int = DEFAULT_REPEATED_NOTE_MIN_STEPS,
     onset_pitches: Optional[list[dict[int, float]]] = None,
     onset_pitch_shift: int = 0,
+    trim_silence: bool = True,
 ) -> list[tuple[Optional[int], int]]:
     """Collapse grid cells into note/rest runs while preserving real re-attacks."""
 
@@ -1154,11 +1197,13 @@ def collapse_runs(
 
     runs.append((current, length))
 
-    # Remove dead air at the beginning/end of the excerpt.
-    while runs and runs[0][0] is None:
-        runs.pop(0)
-    while runs and runs[-1][0] is None:
-        runs.pop()
+    # Direct callers retain the legacy trim option. The renderer keeps the
+    # excerpt timeline so audition and evidence scores remain aligned.
+    if trim_silence:
+        while runs and runs[0][0] is None:
+            runs.pop(0)
+        while runs and runs[-1][0] is None:
+            runs.pop()
 
     return runs
 
@@ -1261,7 +1306,7 @@ def score_rtttl_fidelity(
         onsets = np.zeros_like(notes)
 
     total_seconds = sum(token.seconds for token in tokens)
-    if total_seconds <= 0.0:
+    if total_seconds <= 0.0 or not math.isfinite(analysis.duration) or analysis.duration <= 0.0:
         return 0.0
     low_index = max(0, DETECTION_MIN_MIDI - BASIC_PITCH_MIDI_BASE)
     high_index = min(notes.shape[1], DETECTION_MAX_MIDI - BASIC_PITCH_MIDI_BASE + 1)
@@ -1272,10 +1317,12 @@ def score_rtttl_fidelity(
     cursor = 0.0
     pitched_duration = 0.0
     for token in tokens:
-        start_ratio = cursor / total_seconds
+        # Use real seconds, not the candidate's normalized position. Stretching
+        # every candidate to the source made half/double-tempo errors invisible.
+        start_ratio = cursor / analysis.duration
         cursor += token.seconds
-        end_ratio = cursor / total_seconds
-        first = max(0, int(math.floor(start_ratio * notes.shape[0])) - 1)
+        end_ratio = cursor / analysis.duration
+        first = min(notes.shape[0], max(0, int(math.floor(start_ratio * notes.shape[0])) - 1))
         last = min(
             notes.shape[0],
             max(first + 1, int(math.ceil(end_ratio * notes.shape[0])) + 1),
@@ -1288,7 +1335,7 @@ def score_rtttl_fidelity(
     for octave_shift in range(-48, 49, 12):
         note_total = 0.0
         relative_total = 0.0
-        duration_weight = 0.0
+        duration_weight = pitched_duration
         onset_total = 0.0
         onset_weight = 0.0
         previous_midi: Optional[int] = None
@@ -1297,6 +1344,9 @@ def score_rtttl_fidelity(
             midi = token.midi
             if midi is None:
                 previous_midi = None
+                continue
+            if first >= last:
+                previous_midi = midi
                 continue
             model_index = midi + octave_shift - BASIC_PITCH_MIDI_BASE
             if not low_index <= model_index < high_index:
@@ -1310,7 +1360,6 @@ def score_rtttl_fidelity(
             )
             note_total += support * duration
             relative_total += support / max(source_peak, 1e-6) * duration
-            duration_weight += duration
 
             if previous_midi != midi:
                 onset_first = max(0, first - 2)
@@ -1341,6 +1390,8 @@ def score_rtttl_fidelity(
     for token, first, _last, _duration in segments:
         if token.midi is None:
             previous_pitch_class = None
+            continue
+        if first >= notes.shape[0]:
             continue
         pitch_class = token.midi % 12
         local_onset = float(
@@ -1427,7 +1478,10 @@ def score_rtttl_fidelity(
         max(0, len(pitch_class_sequence) - 1) / max(1.0, analysis.duration * 0.70),
     )
     melodic_shape = 0.45 * unique_pitch_score + 0.55 * motion_score
-    return max(
+    duration_agreement = min(total_seconds, analysis.duration) / max(
+        total_seconds, analysis.duration
+    )
+    return duration_agreement * max(
         0.0,
         min(1.0, combined + 0.10 * melodic_shape - dominance_penalty),
     )
@@ -1499,7 +1553,19 @@ def render_analysis(
         raise RuntimeError("No predominant melody contour survived the source evidence.")
 
     path = remove_one_step_blips(path, onset_pitches=onset_pitches)
-    path = merge_short_note_runs(path, minimum_steps=settings.minimum_melody_run_steps)
+    path = merge_short_note_runs(
+        path,
+        minimum_steps=settings.minimum_melody_run_steps,
+        onset_pitches=onset_pitches,
+    )
+    # Preserve excerpt-relative timing for source/ringtone comparison. Basic
+    # Pitch can end slightly early/late, so pad or clip to the selected grid.
+    seconds_per_step = (240.0 / rtttl_bpm) / settings.grid
+    excerpt_steps = max(1, round(analysis.duration / seconds_per_step))
+    path = (path + [None] * max(0, excerpt_steps - len(path)))[:excerpt_steps]
+    path = preserve_source_silence(path, analysis, rtttl_bpm, settings.grid)
+    if not any(pitch is not None for pitch in path):
+        raise RuntimeError("No melody remained outside the source's near-silent regions.")
     detected_path = path
     path = fit_to_rtttl_octaves(path)
     if settings.octave_smoothing:
@@ -1521,6 +1587,7 @@ def render_analysis(
         repeated_note_min_steps=settings.repeated_note_min_steps,
         onset_pitches=onset_pitches,
         onset_pitch_shift=onset_pitch_shift,
+        trim_silence=False,
     )
 
     rtttl = runs_to_rtttl(runs, title, rtttl_bpm, settings.grid)
@@ -1529,6 +1596,8 @@ def render_analysis(
         diagnostics["rtttl_bpm"] = float(rtttl_bpm)
         diagnostics["detected_events"] = float(detected_events)
         diagnostics["rtttl_tokens"] = float(rtttl.rsplit(":", 1)[-1].count(",") + 1)
+        diagnostics["source_offset_seconds"] = 0.0
+        diagnostics["duration_seconds"] = excerpt_steps * seconds_per_step
     return rtttl
 
 
@@ -1707,7 +1776,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         "--source-mode",
         choices=("harmonic", "full", "auto"),
         default="harmonic",
-        help="Analyze a separated harmonic lead, the full mix, or auto-detect chiptune-like material.",
+        help="Analyze harmonic content (including accompaniment), the full mix, or auto-detect.",
     )
     parser.add_argument("--bpm", type=_bpm_argument, help="Override automatic tempo detection")
     parser.add_argument("--grid", type=int, choices=(16, 32), default=DEFAULT_GRID)

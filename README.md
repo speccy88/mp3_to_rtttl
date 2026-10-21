@@ -1,5 +1,11 @@
 # MP3 to RTTTL Studio
 
+**Unified browser studio:** [open RTTTL Studio on GitHub Pages](https://speccy88.github.io/rtttl-generative-transformer/)
+for browser-side audio conversion, melody selection, editing, generative variations,
+repair suggestions, composition and export. No local server is required. See
+[START_HERE.md](START_HERE.md) for the distinction between the webpage and this
+repository's existing desktop/CLI tools.
+
 ![MP3 to RTTTL Studio showing the source waveform, ranked melody variations, and analyzer piano-roll overlay](docs/images/mp3-to-rtttl-studio-analyzer.png)
 
 _The studio analyzing an original demo hook; no third-party audio is included._
@@ -26,8 +32,9 @@ constraints of RTTTL.
 ## Privacy and network behavior
 
 Audio processing is local. After the Python dependencies are installed, the studio
-does not upload audio, contact a transcription service, or start a web server. Package
-installation may require network access, and the application reads only the audio
+does not upload audio or contact a cloud transcription service. The separate
+GitHub Pages studio also processes selected audio in the browser; it does not send
+files to a Python service. Package installation may require network access, and the application reads only the audio
 files you explicitly open.
 
 ## Requirements
