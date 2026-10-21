@@ -58,10 +58,12 @@ python tools/verify_studio_service.py --output /tmp/studio-service-check.json
 - All seven JavaScript unit-test files pass, including prefix conditioning,
   service-client errors, tempo/transpose edits and append semantics.
 - Root-path production build passes with the existing locked dependency versions.
-- Eight focused browser integration cases were added for conversion, editing,
-  continuation, originals, errors, static fallback and a narrow viewport.
+- Nine focused browser integration cases were added for conversion, fractional
+  excerpt timing, editing, continuation, originals, errors, static fallback and a
+  narrow viewport.
 - Interactive browser smoke verified page rendering, RTTTL import, a transposed
-  copy, original preservation, and the static site's converter setup state.
+  copy, original preservation after reload, playback controls, and the static
+  site's converter setup state.
 - Actual published ONNX weights were hash-verified and run through the continuation
   sampler with native CPU inference: eight source events retained and eight new
   events sampled, with 16 inference calls per run. Same-seed output matched.
@@ -74,9 +76,13 @@ inference establishes checkpoint/sampler compatibility; it does not establish th
 browser WebGPU/WASM lifecycle. The supported local URL is a secure-context
 loopback origin, and the public site uses HTTPS.
 
-The browser regression suite is also configured to run on pull requests. Its
-result should be checked on the paired generator PR. No physical iPhone or
-user-device performance test has been performed in this environment.
+The browser regression suite passed on the paired generator pull request in
+[GitHub Actions run 39520703116](https://github.com/speccy88/rtttl-generative-transformer/actions/runs/39520703116).
+The converter's lightweight CI also passed in
+[run 39520741292](https://github.com/speccy88/mp3_to_rtttl/actions/runs/39520741292).
+No physical iPhone or user-device performance test has been performed in this
+environment. The browser tests use mocked model/API responses where indicated;
+the separate ONNX and real-HTTP checks above establish actual engine execution.
 
 ## Practical limits
 

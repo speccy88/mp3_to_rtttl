@@ -60,7 +60,7 @@ readable `progress` string. On completion it includes:
         "name": "Detailed lead",
         "rtttl": "Hook:d=4,o=5,b=120:8c5,8e5,4g5",
         "score": 0.82,
-        "settings": {"decoder_mode": "events", "grid": 32},
+        "settings": {"decoder_mode": "events", "grid": 16},
         "diagnostics": {"source_offset_seconds": 0, "duration_seconds": 1}
       }
     ],
